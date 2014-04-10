@@ -13,7 +13,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.collections.Transformer;
 import org.jocean.j2se.MBeanRegisterSupport;
 import org.jocean.seda.api.EventHandler;
 import org.jocean.seda.common.EventDrivenFlowRunner;
@@ -24,6 +23,8 @@ import org.jocean.seda.management.RunnerDashboardMXBean;
 import org.jocean.seda.management.annotation.IndicateInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Function;
 
 
 /**
@@ -281,7 +282,7 @@ public class RunnerDashboardImpl
     	this._mbeanSupport = 
         		new MBeanRegisterSupport(runner.getObjectNamePrefix(), null);
 		
-		final Transformer trans = new MillisecondsToText10ms_100ms_500ms_1s_5s();
+		final Function<Long,String> trans = new MillisecondsToText10ms_100ms_500ms_1s_5s();
 		
 		this.transformerOfTTL = trans;
 		this.transformerOfTTA = trans;
@@ -304,28 +305,28 @@ public class RunnerDashboardImpl
 	/**
 	 * @return the transformerOfTimeToLive
 	 */
-	public Transformer getTransformerOfTimeToLive() {
+	public Function<Long,String> getTransformerOfTimeToLive() {
 		return transformerOfTTL;
 	}
 
 	/**
 	 * @param transformerOfTimeToLive the transformerOfTimeToLive to set
 	 */
-	public void setTransformerOfTimeToLive(Transformer transformerOfTimeToLive) {
+	public void setTransformerOfTimeToLive(final Function<Long,String> transformerOfTimeToLive) {
 		this.transformerOfTTL = transformerOfTimeToLive;
 	}
 	
 	/**
 	 * @return the transformerOfTimeToActive
 	 */
-	public Transformer getTransformerOfTimeToActive() {
+	public Function<Long,String> getTransformerOfTimeToActive() {
 		return transformerOfTTA;
 	}
 
 	/**
 	 * @param transformerOfTimeToActive the transformerOfTimeToActive to set
 	 */
-	public void setTransformerOfTimeToActive(Transformer transformerOfTimeToActive) {
+	public void setTransformerOfTimeToActive(Function<Long,String> transformerOfTimeToActive) {
 		this.transformerOfTTA = transformerOfTimeToActive;
 	}
 	
@@ -341,7 +342,7 @@ public class RunnerDashboardImpl
 	}
 
     private void countTimeForStateAware(
-    		final Transformer defaultTransformer, 
+    		final Function<Long,String> defaultTransformer, 
     		final String stateName, final long ttl) {
         ERTuple tuple = erTuplesOfStateAwareTTL.get(stateName);
         if (tuple == null) {
@@ -350,9 +351,9 @@ public class RunnerDashboardImpl
             erTuplesOfStateAwareTTL.put(stateName, tuple);
         }
 
-        final Transformer trans = tuple.trans;
+        final Function<Long,String> trans = tuple.trans;
         if (null != trans) {
-            final Object key = trans.transform(ttl);
+            final Object key = trans.apply(ttl);
             if (null != key) {
                 AtomicLong count = tuple.counter.get(key);
                 if (null == count) {
@@ -441,7 +442,7 @@ public class RunnerDashboardImpl
     }
 
 	private ERTuple createAndRegisterEndReasonTuple(
-			final Transformer transformer, final Object reason, final String category) {
+			final Function<Long,String> transformer, final Object reason, final String category) {
 		final ERTuple tuple = new ERTuple(transformer);
 		
 		final Class<?> mbeanIntf = getIndicateType(tuple.trans.getClass());
@@ -472,7 +473,7 @@ public class RunnerDashboardImpl
 	private void countTimeForEndReason(
 			final long 			value,
 			final Object 		reason, 
-			final Transformer	defaultTransformer,				
+			final Function<Long,String>	defaultTransformer,				
 			final Map<String, ERTuple> tuples, 
 			final String		category) {
 		
@@ -484,9 +485,9 @@ public class RunnerDashboardImpl
 			tuples.put(keyOfTuple, tuple);
 		}
 		
-		final Transformer	trans = tuple.trans;
+		final Function<Long,String>	trans = tuple.trans;
 		if ( null != trans ) {
-			final Object key = trans.transform(value);
+			final Object key = trans.apply(value);
 			if ( null != key ) {
 				AtomicLong count = tuple.counter.get(key);
 				if ( null == count ) {
@@ -512,18 +513,18 @@ public class RunnerDashboardImpl
     private	final AtomicLong	dealTotalTimeToActive = new AtomicLong(0);
 
     //	deal statistics value
-    private	volatile Transformer	transformerOfTTL = null;
-    private	volatile Transformer	transformerOfTTA = null;
+    private	volatile Function<Long,String>	transformerOfTTL = null;
+    private	volatile Function<Long,String>	transformerOfTTA = null;
 
     private	final Map<Object, AtomicLong>	erCounters = 
     	new HashMap<Object, AtomicLong>();
     
     private static class ERTuple {
-    	final Transformer				trans;
+    	final Function<Long,String> trans;
     	final ConcurrentMap<Object, AtomicLong>	counter = 
     			new ConcurrentHashMap<Object, AtomicLong>();
     	
-    	ERTuple(final Transformer trans) {
+    	ERTuple(final Function<Long,String> trans) {
     		this.trans = trans;
     	}
     }
