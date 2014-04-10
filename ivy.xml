@@ -44,9 +44,9 @@
 		<dependency org="org.slf4j" name="slf4j-api" 
 			rev="1.7.6" conf="compile->default(*)" />
 
-        <dependency org="commons-collections" name="commons-collections" 
+<!--         <dependency org="commons-collections" name="commons-collections" 
             rev="3.2.1" conf="compile->default(*)"/>
-		
+ -->		
 		<dependency org="org.jocean" name="jocean-idiom" rev="0.0.7-SNAPSHOT" 
             conf="compile->default(*)" />
 							
