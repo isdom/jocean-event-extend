@@ -53,8 +53,8 @@ public class HelloDemo {
 		@OnEvent(event="coin")
 		EventHandler onCoin() {
 			System.out.println("handler:" + currentEventHandler() + ",event:" + currentEvent());
-			LOG.info("{}: {} accept {}", 
-				currentEventHandler().getName(),  currentEvent() );
+			LOG.info("{}: state({}) accept {}", 
+				selfEventReceiver(), currentEventHandler().getName(),  currentEvent() );
 			return UNLOCKED.bindAndFireDelayedEvent(
 						selfEventReceiver(), 
 						(Math.random() > 0.5f) ? 100L : 5000L, 
@@ -69,8 +69,8 @@ public class HelloDemo {
 		@OnEvent(event="pass")
 		EventHandler onPass() {
 			System.out.println("handler:" + currentEventHandler() + ",event:" + currentEvent());
-			LOG.info("{}: {} accept {}", 
-					currentEventHandler().getName(),  currentEvent());
+            LOG.info("{}: state({}) accept {}", 
+                    selfEventReceiver(), currentEventHandler().getName(),  currentEvent() );
 			((BizStep)currentEventHandler()).cancelAllDelayedEvents();
 			return LOCKED;
 		}
@@ -78,7 +78,7 @@ public class HelloDemo {
 		EventHandler onTimeout(final String arg1, final String arg2) {
 			System.out.println("handler:" + currentEventHandler() + ",event:" + currentEvent());
 			LOG.info("{}: {} accept timeout[{}], args 1.{} 2.{}", 
-					currentEventHandler().getName(),  currentEvent(),
+		            selfEventReceiver(), currentEventHandler().getName(),  currentEvent(),
 					arg1, arg2 );
 			setEndReason( "timeout" );
 			return null;
