@@ -4,32 +4,38 @@
 package org.jocean.seda.container;
 
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.jocean.event.api.EventReceiver;
+import org.jocean.event.api.EventReceiverSource;
+import org.jocean.event.api.internal.EventHandler;
+import org.jocean.event.api.internal.Eventable;
+import org.jocean.event.api.internal.FlowLifecycleAware;
+import org.jocean.event.helper.FlowContext;
+import org.jocean.event.helper.FlowContextImpl;
+import org.jocean.event.helper.FlowStateChangeListener;
+import org.jocean.event.helper.FlowTracker;
 import org.jocean.idiom.COWCompositeSupport;
+import org.jocean.idiom.Detachable;
 import org.jocean.idiom.ExceptionUtils;
+import org.jocean.idiom.ExectionLoop;
 import org.jocean.idiom.ObservationDestroyable;
 import org.jocean.idiom.ObservationDestroyableSupport;
 import org.jocean.idiom.Visitor;
 import org.jocean.j2se.MBeanRegisterSupport;
-import org.jocean.seda.api.EventHandler;
-import org.jocean.seda.api.EventReceiver;
-import org.jocean.seda.api.EventReceiverSource;
-import org.jocean.seda.api.Eventable;
-import org.jocean.seda.api.ExecutorSource;
-import org.jocean.seda.api.FlowLifecycleAware;
-import org.jocean.seda.api.FlowSource;
 import org.jocean.seda.common.EventDrivenFlowRunner;
-import org.jocean.seda.common.FlowContext;
 import org.jocean.seda.common.FlowCountListener;
 import org.jocean.seda.common.FlowCounter;
 import org.jocean.seda.common.FlowCounterAware;
-import org.jocean.seda.common.FlowStateChangeListener;
-import org.jocean.seda.common.FlowTracker;
+import org.jocean.seda.executor.ExecutorSource;
+import org.jocean.seda.executor.ThreadOfExecutorService;
+import org.jocean.seda.executor.TimerService;
 import org.jocean.seda.management.FlowRunnerMXBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +53,11 @@ public class FlowContainer implements EventDrivenFlowRunner {
 
     private static final AtomicInteger allRunnerCounter = new AtomicInteger(0);
     
-	public FlowContainer(final String name, final String onPrefix) {
+	public FlowContainer(final String name, final String onPrefix, final TimerService  timerService) {
     	this._name = ( null != name ? name : super.toString() );	// ensure this.name is not null
     	this._id = allRunnerCounter.incrementAndGet();
-
+    	this._timerService = timerService;
+    	
     	this._mbeanSupport = 
     		new MBeanRegisterSupport( (null == onPrefix ) 
 					? "org.jocean:type=flows,_name=" + this._name 
@@ -65,15 +72,8 @@ public class FlowContainer implements EventDrivenFlowRunner {
 		return	new EventReceiverSource() {
 
 			@Override
-			public <FLOW> EventReceiver create(final FlowSource<FLOW> source) {
-		        //  create new receiver
-		        final FLOW flow = source.getFlow();
-		        return  createEventReceiverOf(flow, source.getInitHandler(flow));
-			}
-
-			@Override
-			public <FLOW> EventReceiver create(
-					final FLOW flow,
+			public EventReceiver create(
+					final Object flow,
 					final EventHandler initHandler
 					) {
 				return createEventReceiverOf(flow, initHandler);
@@ -217,14 +217,8 @@ public class FlowContainer implements EventDrivenFlowRunner {
             final Object flow, 
             final EventHandler initHandler 
             ) {
-        final ExecutorService executorService = this.getWorkService();
-        if ( null == executorService ) {
-            LOG.warn("executorService not ready or runner stopped, just ignore");
-            throw new RuntimeException("FlowContainer: executorService not ready or runner stopped");
-        }
-
         final FlowContextImpl newCtx = 
-            new FlowContextImpl(flow, executorService, this._ctxStatusReactor, this._flowStateChangeListener)
+            new FlowContextImpl(flow, genExectionLoop(), this._ctxStatusReactor, this._flowStateChangeListener)
                 .setCurrentHandler(initHandler, null, null);
         
         if (this._flowContexts.add(newCtx) ) {
@@ -237,7 +231,46 @@ public class FlowContainer implements EventDrivenFlowRunner {
         return  newCtx;
     }
     
-	@Override
+	private ExectionLoop genExectionLoop() {
+        final ExecutorService executorService = this.getWorkService();
+        if ( null == executorService ) {
+            LOG.warn("executorService not ready or runner stopped, just ignore");
+            throw new RuntimeException("FlowContainer: executorService not ready or runner stopped");
+        }
+
+        return new ExectionLoop() {
+
+            @Override
+            public boolean inExectionLoop() {
+                final Thread currentThread = Thread.currentThread();
+                
+                return ( (currentThread instanceof ThreadOfExecutorService)
+                    && (((ThreadOfExecutorService)currentThread).selfExecutorService() == executorService) );
+            }
+
+            @Override
+            public Detachable submit(final Runnable runnable) {
+                final Future<?> future = executorService.submit(runnable);
+                return new Detachable() {
+                    @Override
+                    public void detach() {
+                        future.cancel(false);
+                    }};
+            }
+
+            @Override
+            public Detachable schedule(final Runnable runnable, final long delayMillis) {
+                final Callable<Boolean> cancel = _timerService.schedule(runnable, delayMillis);
+                return new Detachable() {
+                    @Override
+                    public void detach() throws Exception {
+                        cancel.call();
+                    }};
+            }
+        };
+    }
+
+    @Override
 	public boolean destroy() {
 
 		if ( _destroySupport.destroy() ) {
@@ -446,6 +479,8 @@ public class FlowContainer implements EventDrivenFlowRunner {
 	
 	private final String		_name;
 	private	final int			_id;
+	private final TimerService  _timerService;
+	
 	private	final ObservationDestroyableSupport	_destroySupport = 
 			new ObservationDestroyableSupport(this);
 	

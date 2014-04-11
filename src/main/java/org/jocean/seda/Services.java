@@ -1,13 +1,13 @@
 /**
  * 
  */
-package org.jocean.seda.api.tool;
+package org.jocean.seda;
 
 import org.jocean.idiom.ObservationDestroyable;
 import org.jocean.j2se.InstanceLocator;
-import org.jocean.seda.api.ExecutorSource;
-import org.jocean.seda.api.TimerService;
+import org.jocean.seda.executor.ExecutorSource;
 import org.jocean.seda.executor.FlowBasedExecutorSource;
+import org.jocean.seda.executor.TimerService;
 import org.jocean.seda.executor.TimerServiceByScheduleExecutor;
 
 

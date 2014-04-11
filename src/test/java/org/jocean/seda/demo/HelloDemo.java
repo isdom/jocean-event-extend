@@ -5,15 +5,13 @@ package org.jocean.seda.demo;
 
 import java.util.Random;
 
-import org.jocean.seda.api.AbstractFlow;
-import org.jocean.seda.api.BizStep;
-import org.jocean.seda.api.EventHandler;
-import org.jocean.seda.api.EventReceiver;
-import org.jocean.seda.api.EventReceiverSource;
-import org.jocean.seda.api.TimerService;
-import org.jocean.seda.api.annotation.OnEvent;
-import org.jocean.seda.api.tool.Runners;
-import org.jocean.seda.api.tool.Services;
+import org.jocean.event.api.AbstractFlow;
+import org.jocean.event.api.BizStep;
+import org.jocean.event.api.EventReceiver;
+import org.jocean.event.api.EventReceiverSource;
+import org.jocean.event.api.annotation.OnEvent;
+import org.jocean.seda.Runners;
+import org.jocean.seda.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +28,6 @@ public class HelloDemo {
     private static final Logger LOG = 
     		LoggerFactory.getLogger(HelloDemo.class);
 
-    private final TimerService timer = Services.lookupOrCreateTimerService("demo");
-    
     public class DemoFlow extends AbstractFlow<DemoFlow> {
         final BizStep INIT = new BizStep("INIT")
                 .handler( selfInvoker("onCoin") )
@@ -41,21 +37,20 @@ public class HelloDemo {
         private final BizStep LOCKED = 
         		new BizStep("LOCKED")
         		.handler( selfInvoker("onCoin") )
-        		.timer(timer)
         		.freeze();
         		
         private final BizStep UNLOCKED = 
         		new BizStep("UNLOCKED")
         		.handler( selfInvoker( "onPass") )
-        		.timer(timer)
         		.freeze();
 
 		@OnEvent(event="coin")
-		EventHandler onCoin() {
+		private BizStep onCoin() {
 			System.out.println("handler:" + currentEventHandler() + ",event:" + currentEvent());
 			LOG.info("{}: state({}) accept {}", 
 				selfEventReceiver(), currentEventHandler().getName(),  currentEvent() );
 			return UNLOCKED.bindAndFireDelayedEvent(
+			            selfExectionLoop(),
 						selfEventReceiver(), 
 						(Math.random() > 0.5f) ? 100L : 5000L, 
 						selfInvoker("onTimeout"),
@@ -67,7 +62,7 @@ public class HelloDemo {
 		}
 		
 		@OnEvent(event="pass")
-		EventHandler onPass() {
+		private BizStep onPass() {
 			System.out.println("handler:" + currentEventHandler() + ",event:" + currentEvent());
             LOG.info("{}: state({}) accept {}", 
                     selfEventReceiver(), currentEventHandler().getName(),  currentEvent() );
@@ -75,7 +70,8 @@ public class HelloDemo {
 			return LOCKED;
 		}
 		
-		EventHandler onTimeout(final String arg1, final String arg2) {
+		@SuppressWarnings("unused")
+        private BizStep onTimeout(final String arg1, final String arg2) {
 			System.out.println("handler:" + currentEventHandler() + ",event:" + currentEvent());
 			LOG.info("{}: {} accept timeout[{}], args 1.{} 2.{}", 
 		            selfEventReceiver(), currentEventHandler().getName(),  currentEvent(),
@@ -91,6 +87,7 @@ public class HelloDemo {
         		Runners.build(new Runners.Config()
         			.objectNamePrefix("demo:type=test")
 		        	.name("demo")
+		        	.timerService(Services.lookupOrCreateTimerService("demo"))
 		        	.executorSource(Services.lookupOrCreateFlowBasedExecutorSource("demo"))
 		    		);
         

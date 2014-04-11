@@ -17,7 +17,6 @@ import org.jocean.idiom.ExceptionUtils;
 import org.jocean.idiom.ObservationDestroyable;
 import org.jocean.idiom.ObservationDestroyableSupport;
 import org.jocean.j2se.MBeanRegisterSupport;
-import org.jocean.seda.api.TimerService;
 import org.jocean.seda.management.TimerMXBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

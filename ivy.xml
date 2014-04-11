@@ -55,7 +55,10 @@
         <dependency org="org.jocean" name="jocean-j2se" rev="0.0.1-SNAPSHOT" 
             conf="compile->default(*)" />
         
-		<dependency org="ch.qos.logback" name="logback-classic" 
+        <dependency org="org.jocean" name="jocean-event" rev="0.0.1-SNAPSHOT" 
+            conf="compile->default(*)" changing="true" />
+        
+ 		<dependency org="ch.qos.logback" name="logback-classic" 
             rev="1.1.2" conf="test->default(*)" />
 		
     </dependencies>

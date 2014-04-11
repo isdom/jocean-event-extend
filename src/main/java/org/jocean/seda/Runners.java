@@ -1,13 +1,14 @@
 /**
  * 
  */
-package org.jocean.seda.api.tool;
+package org.jocean.seda;
 
+import org.jocean.event.api.EventReceiverSource;
 import org.jocean.idiom.ObservationDestroyable;
 import org.jocean.j2se.InstanceLocator;
-import org.jocean.seda.api.EventReceiverSource;
-import org.jocean.seda.api.ExecutorSource;
 import org.jocean.seda.container.FlowContainer;
+import org.jocean.seda.executor.ExecutorSource;
+import org.jocean.seda.executor.TimerService;
 import org.jocean.seda.management.impl.RunnerDashboardImpl;
 
 
@@ -21,6 +22,8 @@ public class Runners {
 	public static class Config {
 		String		_name;
 		ExecutorSource	_executorSource;
+		TimerService _timerService;
+        
 		//	optional
 		String		_objectNamePrefix = null;
 		boolean		_enableDashboard = true;
@@ -35,6 +38,11 @@ public class Runners {
 			return	this;
 		}
 		
+        public Config timerService(final TimerService timer) {
+            this._timerService = timer;
+            return  this;
+        }
+        
 		public Config objectNamePrefix(final String prefix) {
 			this._objectNamePrefix = prefix;
 			return	this;
@@ -49,7 +57,7 @@ public class Runners {
 	public static EventReceiverSource build(final Config config) {
 		final FlowContainer runner = 
 				new FlowContainer(
-						config._name, config._objectNamePrefix);
+						config._name, config._objectNamePrefix, config._timerService);
 		
 		runner.setExecutorSource(config._executorSource);
 
