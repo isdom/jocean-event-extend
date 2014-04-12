@@ -3,7 +3,7 @@
 <!--author: marvin.ma -->
 <!--date:2014-04-03 -->
 
-<project name="jocean-seda" basedir=".">
+<project name="jocean-event-extend" basedir=".">
 
     <!--设置下面要用到的属性-->
     <property name="module.name" value="${ant.project.name}" />

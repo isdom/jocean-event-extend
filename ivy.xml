@@ -25,7 +25,7 @@
        status="release" 
        publication="20101111120000">
         <description homepage="http://www.jocean.org">
-          jocean : seda -- Staged Event Driven Architecture
+          jocean : event's Extend Impl
         </description>
     </info>
     <configurations>
@@ -55,10 +55,13 @@
         <dependency org="org.jocean" name="jocean-j2se" rev="0.0.1-SNAPSHOT" 
             conf="compile->default(*)" />
         
-        <dependency org="org.jocean" name="jocean-event" rev="0.0.1-SNAPSHOT" 
+        <dependency org="org.jocean" name="jocean-event-api" rev="0.0.1-SNAPSHOT" 
             conf="compile->default(*)" changing="true" />
         
- 		<dependency org="ch.qos.logback" name="logback-classic" 
+        <dependency org="org.jocean" name="jocean-event-core" rev="0.1.0-SNAPSHOT" 
+            conf="compile->default(*)" changing="true" />
+       
+        <dependency org="ch.qos.logback" name="logback-classic" 
             rev="1.1.2" conf="test->default(*)" />
 		
     </dependencies>
