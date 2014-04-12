@@ -140,12 +140,12 @@ public class FlowContainer implements EventDrivenFlowRunner {
 	//	implements Extensible
 	@SuppressWarnings("unchecked")
 	@Override
-	public <EXT> EXT getExtend(final Class<EXT> type) {
+    public <INTF> INTF queryInterfaceInstance(final Class<INTF> type) {
 		if ( type.equals(FlowTracker.class) ) {
-			return	(EXT)this._flowTracker;
+			return	(INTF)this._flowTracker;
 		}
 		else if ( type.equals(FlowCounter.class)) {
-			return	(EXT)this._flowCounter;
+			return	(INTF)this._flowCounter;
 		}
 		else {
 			return null;

@@ -56,7 +56,7 @@
             conf="compile->default(*)" />
         
         <dependency org="org.jocean" name="jocean-event-api" rev="0.0.1-SNAPSHOT" 
-            conf="compile->default(*)" changing="true" />
+            conf="compile->default(*)" changing="true"/>
         
         <dependency org="org.jocean" name="jocean-event-core" rev="0.1.0-SNAPSHOT" 
             conf="compile->default(*)" changing="true" />

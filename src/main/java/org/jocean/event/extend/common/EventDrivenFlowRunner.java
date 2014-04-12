@@ -4,7 +4,7 @@
 package org.jocean.event.extend.common;
 
 import org.jocean.event.extend.management.FlowRunnerMXBean;
-import org.jocean.idiom.Extensible;
+import org.jocean.idiom.InterfaceSource;
 import org.jocean.idiom.ObservationDestroyable;
 
 
@@ -13,7 +13,7 @@ import org.jocean.idiom.ObservationDestroyable;
  *
  */
 public interface EventDrivenFlowRunner
-	extends FlowRunnerMXBean, Extensible, ObservationDestroyable {
+	extends FlowRunnerMXBean, InterfaceSource, ObservationDestroyable {
 	
 	public String getObjectNamePrefix();
 }

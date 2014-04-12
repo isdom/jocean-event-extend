@@ -289,12 +289,12 @@ public class RunnerDashboardImpl
 
 		this._mbeanSupport.registerMBean("module=dashboard", this);
 		
-		this._runner.getExtend(FlowTracker.class)
+		this._runner.queryInterfaceInstance(FlowTracker.class)
 		    .registerFlowStateChangeListener(myListener);
 	}
 
 	public void destroy() {
-		this._runner.getExtend(FlowTracker.class)
+		this._runner.queryInterfaceInstance(FlowTracker.class)
 		    .unregisterFlowStateChangeListener(myListener);
 		
 		this.innerService.shutdownNow();
