@@ -4,10 +4,10 @@
 package org.jocean.event.extend;
 
 import org.jocean.event.api.EventReceiverSource;
-import org.jocean.event.extend.container.FlowContainer;
 import org.jocean.event.extend.executor.ExecutorSource;
 import org.jocean.event.extend.executor.TimerService;
 import org.jocean.event.extend.management.impl.RunnerDashboardImpl;
+import org.jocean.event.extend.runner.FlowRunner;
 import org.jocean.idiom.ObservationDestroyable;
 import org.jocean.j2se.InstanceLocator;
 
@@ -55,8 +55,8 @@ public class Runners {
 	}
 	
 	public static EventReceiverSource build(final Config config) {
-		final FlowContainer runner = 
-				new FlowContainer(
+		final FlowRunner runner = 
+				new FlowRunner(
 						config._name, config._objectNamePrefix, config._timerService);
 		
 		runner.setExecutorSource(config._executorSource);
@@ -86,7 +86,7 @@ public class Runners {
 	}
 	
 	public static EventReceiverSource lookup(final String name) {
-		final FlowContainer runner =	(FlowContainer)InstanceLocator.locateInstance(EVENTRECVRSRC_STR, name);
+		final FlowRunner runner =	(FlowRunner)InstanceLocator.locateInstance(EVENTRECVRSRC_STR, name);
 		return (null != runner) ? (EventReceiverSource)runner.genEventReceiverSource() : null;
 	}
 }

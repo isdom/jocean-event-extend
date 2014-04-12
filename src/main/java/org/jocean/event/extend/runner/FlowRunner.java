@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.jocean.event.extend.container;
+package org.jocean.event.extend.runner;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -46,14 +46,14 @@ import org.slf4j.LoggerFactory;
  * @author hp
  *
  */
-public class FlowContainer implements EventDrivenFlowRunner {
+public class FlowRunner implements EventDrivenFlowRunner {
 	
     private static final Logger LOG = 
-    	LoggerFactory.getLogger(FlowContainer.class);
+    	LoggerFactory.getLogger(FlowRunner.class);
 
     private static final AtomicInteger allRunnerCounter = new AtomicInteger(0);
     
-	public FlowContainer(final String name, final String onPrefix, final TimerService  timerService) {
+	public FlowRunner(final String name, final String onPrefix, final TimerService  timerService) {
     	this._name = ( null != name ? name : super.toString() );	// ensure this.name is not null
     	this._id = allRunnerCounter.incrementAndGet();
     	this._timerService = timerService;
@@ -65,7 +65,7 @@ public class FlowContainer implements EventDrivenFlowRunner {
 				null );
     	
         //	register mbean of self
-		this._mbeanSupport.registerMBean("module=container", this);
+		this._mbeanSupport.registerMBean("module=runner", this);
     }
 
 	public EventReceiverSource genEventReceiverSource() {
@@ -235,7 +235,7 @@ public class FlowContainer implements EventDrivenFlowRunner {
         final ExecutorService executorService = this.getWorkService();
         if ( null == executorService ) {
             LOG.warn("executorService not ready or runner stopped, just ignore");
-            throw new RuntimeException("FlowContainer: executorService not ready or runner stopped");
+            throw new RuntimeException("FlowRunner: executorService not ready or runner stopped");
         }
 
         return new ExectionLoop() {
@@ -431,7 +431,7 @@ public class FlowContainer implements EventDrivenFlowRunner {
         	new FlowContextImpl.StatusReactor() {
                 @Override
                 public boolean checkIfExceedLimit(FlowContextImpl ctx) {
-                    return FlowContainer.this.checkIfExceedLimit(ctx);
+                    return FlowRunner.this.checkIfExceedLimit(ctx);
                 }
                 
     			public void onActive(final FlowContextImpl ctx){
@@ -510,7 +510,7 @@ public class FlowContainer implements EventDrivenFlowRunner {
 	private final class InnerFlowCounter implements FlowCounter, Comparable<InnerFlowCounter> {
         @Override
         public FlowRunnerMXBean getRunner() {
-            return FlowContainer.this;
+            return FlowRunner.this;
         }
     
         @Override
@@ -537,7 +537,7 @@ public class FlowContainer implements EventDrivenFlowRunner {
         }
         
         int containerId() {
-            return FlowContainer.this._id;
+            return FlowRunner.this._id;
         }
 
         @Override
