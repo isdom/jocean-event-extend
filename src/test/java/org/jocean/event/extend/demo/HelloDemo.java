@@ -49,24 +49,22 @@ public class HelloDemo {
 			System.out.println("handler:" + currentEventHandler() + ",event:" + currentEvent());
 			LOG.info("{}: state({}) accept {}", 
 				selfEventReceiver(), currentEventHandler().getName(),  currentEvent() );
-			return UNLOCKED.bindAndFireDelayedEvent(
-			            selfExectionLoop(),
-						selfEventReceiver(), 
-						(Math.random() > 0.5f) ? 100L : 5000L, 
-						selfInvoker("onTimeout"),
-						BizStep.uniqueEvent( "timer-" ), 
-						"hello", "world"
-					)
-					.rename( /*selfId()+*/"-UNLOCKED")
-					.freeze();
+			
+	        return ((BizStep)this.fireDelayEventAndPush(
+		        UNLOCKED.delayEvent(selfInvoker("onTimeout"))
+                    .args("hello", "world")
+                    .delayMillis( (Math.random() > 0.5f) ? 10000L : 5000L))
+                    .owner()).freeze();
 		}
 		
 		@OnEvent(event="pass")
-		private BizStep onPass() {
+		private BizStep onPass() throws Exception {
 			System.out.println("handler:" + currentEventHandler() + ",event:" + currentEvent());
             LOG.info("{}: state({}) accept {}", 
                     selfEventReceiver(), currentEventHandler().getName(),  currentEvent() );
-			((BizStep)currentEventHandler()).cancelAllDelayedEvents();
+            
+            this.popAndCancelDealyEvents();
+            
 			return LOCKED;
 		}
 		
@@ -80,6 +78,10 @@ public class HelloDemo {
 			return null;
 		}
 
+        @Override
+        public String toString() {
+            return "DemoFlow []";
+        }
     }
     
 	private void run() throws Exception {
