@@ -51,10 +51,9 @@ public class HelloDemo {
 				selfEventReceiver(), currentEventHandler().getName(),  currentEvent() );
 			
 	        return ((BizStep)this.fireDelayEventAndPush(
-		        UNLOCKED.delayEvent(selfInvoker("onTimeout"))
-                    .args("hello", "world")
-                    .delayMillis( (Math.random() > 0.5f) ? 10000L : 5000L))
-                    .owner()).freeze();
+		        this.UNLOCKED.makeDelayEvent(selfInvoker("onTimeout"), delayMillis())
+                    .args("hello", "world")))
+                    .freeze();
 		}
 		
 		@OnEvent(event="pass")
@@ -78,6 +77,10 @@ public class HelloDemo {
 			return null;
 		}
 
+		long delayMillis() {
+		    return (Math.random() > 0.5f) ? 10000L : 5000L;
+		}
+		
         @Override
         public String toString() {
             return "DemoFlow []";

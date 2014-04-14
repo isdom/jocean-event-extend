@@ -62,7 +62,7 @@
             conf="compile->default(*)" changing="true" />
        
         <dependency org="ch.qos.logback" name="logback-classic" 
-            rev="1.1.2" conf="test->default(*)" />
+            rev="1.1.2" conf="test->default(*)"/>
 		
     </dependencies>
 </ivy-module>
