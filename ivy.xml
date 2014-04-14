@@ -50,10 +50,10 @@
             conf="compile->default(*)"/>
         
 		<dependency org="org.jocean" name="jocean-idiom" rev="0.0.7-SNAPSHOT" 
-            conf="compile->default(*)" />
+            conf="compile->default(*)" changing="true"/>
 							
         <dependency org="org.jocean" name="jocean-j2se" rev="0.0.1-SNAPSHOT" 
-            conf="compile->default(*)" />
+            conf="compile->default(*)" changing="true"/>
         
         <dependency org="org.jocean" name="jocean-event-api" rev="0.0.1-SNAPSHOT" 
             conf="compile->default(*)" changing="true"/>
