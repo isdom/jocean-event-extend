@@ -96,6 +96,11 @@ public class RunnerDashboardImpl
 		return	this._runner.getFlowTotalCount();
 	}
 
+    @Override
+    public String[] getFlowsDetail() {
+        return this._runner.getFlowsDetail();
+    }
+    
 	/*
 	@Override
 	public int getJobLargestActiveCount() {
@@ -110,31 +115,6 @@ public class RunnerDashboardImpl
 	@Override
 	public int getJobTimeoutEventCount() {
 		return	timeoutHolder.size();
-	}
-	
-	@Override
-	public String[] getJobsDetail() {
-		final Set<Map.Entry<ID, CTX>> ctxs = contextHolder.entrySet();
-		
-		final List<String> ret = new ArrayList<String>();
-		final SimpleDateFormat formater = new SimpleDateFormat("yyMMdd-HH:mm:ss.SSS");
-		
-		for ( Map.Entry<ID, CTX> entry : ctxs ) {
-			final StringBuilder sb = new StringBuilder();
-			
-			sb.append(entry.getKey().toString());
-			sb.append(":[");
-			
-			CTX job = entry.getValue();
-			sb.append(job.getCurrentState());
-			sb.append("]create:");
-			sb.append(formater.format( new Date(job.getCreateTime())) );
-			sb.append("/last:");
-			sb.append(formater.format( new Date(job.getLastModify())) );
-			ret.add(sb.toString());
-		}
-		
-		return	ret.toArray(new String[0]);
 	}
 
 	@Override

@@ -3,6 +3,8 @@
  */
 package org.jocean.event.extend.demo;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.jocean.event.api.AbstractFlow;
@@ -12,6 +14,7 @@ import org.jocean.event.api.EventReceiverSource;
 import org.jocean.event.api.annotation.OnEvent;
 import org.jocean.event.extend.Runners;
 import org.jocean.event.extend.Services;
+import org.jocean.idiom.Detachable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,15 +47,18 @@ public class HelloDemo {
         		.handler( selfInvoker( "onPass") )
         		.freeze();
 
+        private final List<Detachable> _timers = new ArrayList<Detachable>();
+        
 		@OnEvent(event="coin")
 		private BizStep onCoin() {
 			System.out.println("handler:" + currentEventHandler() + ",event:" + currentEvent());
 			LOG.info("{}: state({}) accept {}", 
 				selfEventReceiver(), currentEventHandler().getName(),  currentEvent() );
 			
-	        return ((BizStep)this.fireDelayEventAndPush(
+	        return ((BizStep)this.fireDelayEventAndAddTo(
 		        this.UNLOCKED.makeDelayEvent(selfInvoker("onTimeout"), delayMillis())
-                    .args("hello", "world")))
+                    .args("hello", "world"), 
+                    this._timers))
                     .freeze();
 		}
 		
@@ -62,7 +68,7 @@ public class HelloDemo {
             LOG.info("{}: state({}) accept {}", 
                     selfEventReceiver(), currentEventHandler().getName(),  currentEvent() );
             
-            this.popAndCancelDealyEvents();
+            this.removeAndCancelAllDealyEvents( this._timers);
             
 			return LOCKED;
 		}

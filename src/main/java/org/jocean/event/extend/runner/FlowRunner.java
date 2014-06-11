@@ -3,6 +3,11 @@
  */
 package org.jocean.event.extend.runner;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -60,8 +65,8 @@ public class FlowRunner implements EventDrivenFlowRunner {
     	
     	this._mbeanSupport = 
     		new MBeanRegisterSupport( (null == onPrefix ) 
-					? "org.jocean:type=flows,_name=" + this._name 
-					: onPrefix + ",_name=" + this._name ,
+					? "org.jocean:type=flows,name=" + this._name 
+					: onPrefix + ",name=" + this._name ,
 				null );
     	
         //	register mbean of self
@@ -213,6 +218,49 @@ public class FlowRunner implements EventDrivenFlowRunner {
 		return this._dealBypassCount.get();
 	}
 
+
+    @Override
+    public String[] getFlowsDetail() {
+        final List<String> ret = new ArrayList<String>();
+        final SimpleDateFormat formater = new SimpleDateFormat("yyyyMMdd-HH:mm:ss.SSS");
+        
+        final Iterator<FlowContextImpl> iter = this._flowContexts.iterator();
+        
+        while ( iter.hasNext() ) {
+            final FlowContextImpl ctx = iter.next();
+            if ( null != ctx ) {
+                final StringBuilder sb = new StringBuilder();
+                
+                sb.append("flow:");
+                sb.append( ctx.getFlow().toString() );
+                
+                sb.append("/state:");
+                final EventHandler currentHandler = ctx.getCurrentHandler();
+                sb.append( null != currentHandler ? currentHandler.getName() : "(null)" );
+            
+                sb.append("/create:");
+                sb.append(formater.format( new Date(ctx.getCreateTime())) );
+                
+                sb.append("/last:");
+                sb.append(formater.format( new Date(ctx.getLastModify())) );
+                
+                sb.append("/tta:");
+                sb.append(ctx.getTimeToActive());
+                
+                sb.append("/ttl:");
+                sb.append(ctx.getTimeToLive());
+                
+                sb.append("/endReason:");
+                final Object endReason = ctx.getEndReason();
+                sb.append(null != endReason ? endReason.toString() : "(null)");
+                
+                ret.add(sb.toString());
+            }
+        }
+        
+        return  ret.toArray(new String[0]);
+    }
+    
     private FlowContextImpl initFlowCtx(
             final Object flow, 
             final EventHandler initHandler 
@@ -574,5 +622,4 @@ public class FlowRunner implements EventDrivenFlowRunner {
             }
         }
 	};
-
 }

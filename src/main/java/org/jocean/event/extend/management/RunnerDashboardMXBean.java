@@ -45,5 +45,5 @@ public interface RunnerDashboardMXBean {
 	
 //    public int 	getJobLargestActiveCount();
 //    
-//	public String[] getJobsDetail();
+	public String[] getFlowsDetail();
 }

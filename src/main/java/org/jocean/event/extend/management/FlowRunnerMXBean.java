@@ -25,6 +25,8 @@ public interface FlowRunnerMXBean {
 	
 	public int getFlowActiveCount();
 	
+    public String[] getFlowsDetail();
+    
 	public long getDealHandledCount();
 	
 	public long getDealCompletedCount();
