@@ -139,7 +139,13 @@ public class FlowRunner implements EventDrivenFlowRunner {
                     ctx.destroy();
                     throw e;
                 }
-			}};
+			}
+            
+            @Override
+            public String toString() {
+                return "EventReceiver [flow=" + ctx.getFlow() +"]";
+            }
+		};
 	}
 	
 	//	implements Extensible
