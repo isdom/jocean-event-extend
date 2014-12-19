@@ -14,7 +14,7 @@ dependencies {
     compile "com.google.guava:guava:16.0.1"
             
     /* jocean */
-    compile "org.jocean:jocean-j2se:0.0.2"
+    compile ("org.jocean:jocean-j2se:0.0.3-SNAPSHOT") { transitive = false }
     compile "org.jocean:jocean-event-core:0.1.5-SNAPSHOT"
     
     /* test */
