@@ -28,6 +28,20 @@ public class Runners {
 		String		_objectNamePrefix = null;
 		boolean		_enableDashboard = true;
 		
+		public Config() {
+		}
+		
+        public Config(
+                final String objNamePrefix,
+                final String name,
+                final TimerService timer,
+                final ExecutorSource executorSource) {
+            this._objectNamePrefix = objNamePrefix;
+            this._name = name;
+            this._timerService = timer;
+            this._executorSource = executorSource;
+        }
+        
 		public Config name(final String name) {
 			this._name = name;
 			return	this;
