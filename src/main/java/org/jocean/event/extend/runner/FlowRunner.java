@@ -40,6 +40,7 @@ import org.jocean.idiom.ExceptionUtils;
 import org.jocean.idiom.ExectionLoop;
 import org.jocean.idiom.ObservationDestroyable;
 import org.jocean.idiom.ObservationDestroyableSupport;
+import org.jocean.idiom.ReflectUtils;
 import org.jocean.idiom.Visitor;
 import org.jocean.j2se.MBeanRegisterSupport;
 import org.slf4j.Logger;
@@ -82,7 +83,17 @@ public class FlowRunner implements EventDrivenFlowRunner {
 					final EventHandler initHandler
 					) {
 				return createEventReceiverOf(flow, initHandler);
-			}};
+			}
+
+            @Override
+            public EventReceiver createFromInnerState(final EventHandler initState) {
+                final Object flow = ReflectUtils.getOuterFromInnerObject(initState);
+                if (null == flow) {
+                    LOG.warn("invalid inner initState {},can't get it's outer flow.", initState);
+                    throw new RuntimeException("invalid inner initState " + initState +",can't get it's outer flow.");
+                }
+                return createEventReceiverOf(flow, initState);
+            }};
 	}
 	
     private <FLOW> EventReceiver createEventReceiverOf(
