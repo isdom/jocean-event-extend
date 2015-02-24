@@ -42,7 +42,7 @@ import org.jocean.idiom.ObservationDestroyable;
 import org.jocean.idiom.ObservationDestroyableSupport;
 import org.jocean.idiom.ReflectUtils;
 import org.jocean.idiom.Visitor;
-import org.jocean.j2se.MBeanRegisterSupport;
+import org.jocean.j2se.jmx.MBeanRegisterSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

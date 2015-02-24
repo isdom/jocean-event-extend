@@ -22,7 +22,7 @@ import org.jocean.event.extend.management.ExecutorMXBean;
 import org.jocean.event.extend.management.FlowRunnerMXBean;
 import org.jocean.idiom.ObservationDestroyable;
 import org.jocean.idiom.ObservationDestroyableSupport;
-import org.jocean.j2se.MBeanRegisterSupport;
+import org.jocean.j2se.jmx.MBeanRegisterSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

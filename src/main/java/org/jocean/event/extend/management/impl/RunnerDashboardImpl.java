@@ -20,7 +20,7 @@ import org.jocean.event.core.FlowTracker;
 import org.jocean.event.extend.common.EventDrivenFlowRunner;
 import org.jocean.event.extend.management.RunnerDashboardMXBean;
 import org.jocean.event.extend.management.annotation.IndicateInterface;
-import org.jocean.j2se.MBeanRegisterSupport;
+import org.jocean.j2se.jmx.MBeanRegisterSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
