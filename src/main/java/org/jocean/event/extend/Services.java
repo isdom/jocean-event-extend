@@ -8,7 +8,7 @@ import org.jocean.event.extend.executor.FlowBasedExecutorSource;
 import org.jocean.event.extend.executor.TimerService;
 import org.jocean.event.extend.executor.TimerServiceByScheduleExecutor;
 import org.jocean.idiom.ObservationDestroyable;
-import org.jocean.j2se.InstanceLocator;
+import org.jocean.j2se.jmx.InstanceLocator;
 
 
 /**

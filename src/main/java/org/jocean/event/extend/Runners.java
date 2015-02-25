@@ -9,7 +9,7 @@ import org.jocean.event.extend.executor.TimerService;
 import org.jocean.event.extend.management.impl.RunnerDashboardImpl;
 import org.jocean.event.extend.runner.FlowRunner;
 import org.jocean.idiom.ObservationDestroyable;
-import org.jocean.j2se.InstanceLocator;
+import org.jocean.j2se.jmx.InstanceLocator;
 
 
 /**
