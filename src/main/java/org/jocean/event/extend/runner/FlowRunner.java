@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.jocean.event.api.EventEngine;
 import org.jocean.event.api.EventReceiver;
-import org.jocean.event.api.EventReceiverSource;
 import org.jocean.event.api.internal.EventHandler;
 import org.jocean.event.api.internal.Eventable;
 import org.jocean.event.api.internal.FlowLifecycleAware;
@@ -74,8 +74,8 @@ public class FlowRunner implements EventDrivenFlowRunner {
 		this._mbeanSupport.registerMBean("module=runner", this);
     }
 
-	public EventReceiverSource genEventReceiverSource() {
-		return	new EventReceiverSource() {
+	public EventEngine buildEventEngine() {
+		return	new EventEngine() {
 
 			@Override
 			public EventReceiver create(

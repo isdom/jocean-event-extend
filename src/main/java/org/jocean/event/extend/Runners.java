@@ -3,7 +3,7 @@
  */
 package org.jocean.event.extend;
 
-import org.jocean.event.api.EventReceiverSource;
+import org.jocean.event.api.EventEngine;
 import org.jocean.event.extend.executor.ExecutorSource;
 import org.jocean.event.extend.executor.TimerService;
 import org.jocean.event.extend.management.impl.RunnerDashboardImpl;
@@ -68,7 +68,7 @@ public class Runners {
 		}
 	}
 	
-	public static EventReceiverSource build(final Config config) {
+	public static EventEngine build(final Config config) {
 		final FlowRunner runner = 
 				new FlowRunner(
 						config._name, config._objectNamePrefix, config._timerService);
@@ -96,11 +96,11 @@ public class Runners {
 				InstanceLocator.unregisterInstance(EVENTRECVRSRC_STR, runner.getName());
 			}});
 		
-		return	runner.genEventReceiverSource();
+		return	runner.buildEventEngine();
 	}
 	
-	public static EventReceiverSource lookup(final String name) {
+	public static EventEngine lookup(final String name) {
 		final FlowRunner runner =	(FlowRunner)InstanceLocator.locateInstance(EVENTRECVRSRC_STR, name);
-		return (null != runner) ? (EventReceiverSource)runner.genEventReceiverSource() : null;
+		return (null != runner) ? (EventEngine)runner.buildEventEngine() : null;
 	}
 }

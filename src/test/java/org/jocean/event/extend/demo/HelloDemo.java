@@ -9,8 +9,8 @@ import java.util.Random;
 
 import org.jocean.event.api.AbstractFlow;
 import org.jocean.event.api.BizStep;
+import org.jocean.event.api.EventEngine;
 import org.jocean.event.api.EventReceiver;
-import org.jocean.event.api.EventReceiverSource;
 import org.jocean.event.api.annotation.OnEvent;
 import org.jocean.event.extend.Runners;
 import org.jocean.event.extend.Services;
@@ -32,7 +32,7 @@ public class HelloDemo {
     		LoggerFactory.getLogger(HelloDemo.class);
 
     public class DemoFlow extends AbstractFlow<DemoFlow> {
-        final BizStep INIT = new BizStep("INIT")
+        final BizStep INIT = new BizStep("INIT") {}
                 .handler( selfInvoker("onCoin") )
                 .handler( selfInvoker("onPass") )
                 .freeze();
@@ -94,7 +94,7 @@ public class HelloDemo {
     }
     
 	private void run() throws Exception {
-        final EventReceiverSource source = 
+        final EventEngine engine = 
         		Runners.build(new Runners.Config()
         			.objectNamePrefix("demo:type=test")
 		        	.name("demo")
@@ -102,8 +102,7 @@ public class HelloDemo {
 		        	.executorSource(Services.lookupOrCreateFlowBasedExecutorSource("demo"))
 		    		);
         
-        final DemoFlow flow = new DemoFlow();
-        final EventReceiver receiver = source.create(flow, flow.INIT);
+        final EventReceiver receiver = engine.createFromInnerState(new DemoFlow().INIT);
         
     	while (true) {
     	    final String event = genEvent();
