@@ -19,9 +19,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.jocean.event.api.EventEngine;
 import org.jocean.event.api.EventReceiver;
+import org.jocean.event.api.FlowLifecycleListener;
 import org.jocean.event.api.internal.EventHandler;
 import org.jocean.event.api.internal.Eventable;
-import org.jocean.event.api.internal.FlowLifecycleAware;
 import org.jocean.event.core.FlowContext;
 import org.jocean.event.core.FlowContextImpl;
 import org.jocean.event.core.FlowStateChangeListener;
@@ -38,9 +38,9 @@ import org.jocean.idiom.COWCompositeSupport;
 import org.jocean.idiom.Detachable;
 import org.jocean.idiom.ExceptionUtils;
 import org.jocean.idiom.ExectionLoop;
+import org.jocean.idiom.InterfaceUtils;
 import org.jocean.idiom.ObservationDestroyable;
 import org.jocean.idiom.ObservationDestroyableSupport;
-import org.jocean.idiom.ReflectUtils;
 import org.jocean.idiom.Visitor;
 import org.jocean.j2se.jmx.MBeanRegisterSupport;
 import org.slf4j.Logger;
@@ -79,40 +79,34 @@ public class FlowRunner implements EventDrivenFlowRunner {
 
 			@Override
 			public EventReceiver create(
-					final Object flow,
-					final EventHandler initHandler
+					final String name,
+					final EventHandler init,
+					final Object... reactors
 					) {
-				return createEventReceiverOf(flow, initHandler);
-			}
-
-            @Override
-            public EventReceiver createFromInnerState(final EventHandler initState) {
-                final Object flow = ReflectUtils.getOuterFromInnerObject(initState);
-                if (null == flow) {
-                    LOG.warn("invalid inner initState {},can't get it's outer flow.", initState);
-                    throw new RuntimeException("invalid inner initState " + initState +",can't get it's outer flow.");
-                }
-                return createEventReceiverOf(flow, initState);
-            }};
+				return createEventReceiverOf(name, init, reactors);
+			}};
 	}
 	
-    private <FLOW> EventReceiver createEventReceiverOf(
-            final FLOW flow, 
-            final EventHandler initHandler
+    private EventReceiver createEventReceiverOf(
+            final String name, 
+            final EventHandler initHandler,
+            final Object... reactors
             ) {
         //  create new receiver
-        final FlowContextImpl ctx = initFlowCtx(flow, initHandler);
+        final FlowContextImpl ctx = initFlowCtx(name, reactors, initHandler);
         
-        final EventReceiver newReceiver = genEventReceiverWithCtx(ctx);
+        final EventReceiver newReceiver = genEventReceiverWithCtx(name, ctx);
         
-        if ( flow instanceof FlowLifecycleAware ) {
-            try {
-                ((FlowLifecycleAware)flow).afterEventReceiverCreated(newReceiver);
-            }
-            catch (Exception e) {
-                LOG.error("exception when invoke flow {}'s afterEventReceiverCreated, detail: {}",
-                        flow, ExceptionUtils.exception2detail(e));
-            }
+        final FlowLifecycleListener lifecycleListener = 
+        		InterfaceUtils.compositeByType(reactors, FlowLifecycleListener.class);
+		if (null!=lifecycleListener) {
+			try {
+				lifecycleListener.afterEventReceiverCreated(newReceiver);
+			}
+			catch (Exception e) {
+				LOG.error("exception when invoke flow {}'s afterEventReceiverCreated, detail: {}",
+						name, ExceptionUtils.exception2detail(e));
+			}
         }
         
         return  newReceiver;
@@ -122,7 +116,7 @@ public class FlowRunner implements EventDrivenFlowRunner {
 	 * @param ctx
 	 * @return
 	 */
-	private EventReceiver genEventReceiverWithCtx(final FlowContextImpl ctx) {
+	private EventReceiver genEventReceiverWithCtx(final String name, final FlowContextImpl ctx) {
 		return	new EventReceiver() {
 
 			@Override
@@ -132,7 +126,7 @@ public class FlowRunner implements EventDrivenFlowRunner {
 		        }
 		        catch (final Exception e) {
 		            LOG.error("exception when flow({})'s processEvent, detail:{}, try end flow", 
-		                    ctx.getFlow(), ExceptionUtils.exception2detail(e));
+		                    this, ExceptionUtils.exception2detail(e));
 		            ctx.destroy(event, args);
 		            throw e;
 		        }
@@ -146,7 +140,7 @@ public class FlowRunner implements EventDrivenFlowRunner {
                 }
                 catch (final Exception e) {
                     LOG.error("exception when flow({})'s processEvent, detail:{}, try end flow", 
-                            ctx.getFlow(), ExceptionUtils.exception2detail(e));
+                            this, ExceptionUtils.exception2detail(e));
 		            ctx.destroy(eventable.event(), args);
                     throw e;
                 }
@@ -154,7 +148,9 @@ public class FlowRunner implements EventDrivenFlowRunner {
             
             @Override
             public String toString() {
-                return "EventReceiver [flow=" + ctx.getFlow() +"]";
+                return null != name 
+            		? "EventReceiver [" + name +"]"
+            		: super.toString();
             }
 		};
 	}
@@ -249,7 +245,7 @@ public class FlowRunner implements EventDrivenFlowRunner {
                 final StringBuilder sb = new StringBuilder();
                 
                 sb.append("flow:");
-                sb.append( ctx.getFlow().toString() );
+                sb.append( ctx.toString() );
                 
                 sb.append("/state:");
                 final EventHandler currentHandler = ctx.getCurrentHandler();
@@ -279,11 +275,12 @@ public class FlowRunner implements EventDrivenFlowRunner {
     }
     
     private FlowContextImpl initFlowCtx(
-            final Object flow, 
+			final String 	name,
+	        final Object[] 	reactors, 
             final EventHandler initHandler 
             ) {
         final FlowContextImpl newCtx = 
-            new FlowContextImpl(flow, genExectionLoop(), this._ctxStatusReactor, this._flowStateChangeListener)
+            new FlowContextImpl(name, reactors, genExectionLoop(), this._ctxStatusReactor, this._flowStateChangeListener)
                 .setCurrentHandler(initHandler, null, null);
         
         if (this._flowContexts.add(newCtx) ) {
@@ -484,7 +481,7 @@ public class FlowRunner implements EventDrivenFlowRunner {
 			
 			//	超过最大 Actived Flow 限制值
 			LOG.warn("try active flow({}) when current actived flow count({}) has exceed limit({})", 
-					ctx.getFlow(), activedFlowCount, this.busyThreshold);
+					ctx, activedFlowCount, this.busyThreshold);
 			return true;
 		}
 		else {

@@ -102,7 +102,8 @@ public class HelloDemo {
 		        	.executorSource(Services.lookupOrCreateFlowBasedExecutorSource("demo"))
 		    		);
         
-        final EventReceiver receiver = engine.createFromInnerState(new DemoFlow().INIT);
+        final DemoFlow demo = new DemoFlow();
+        final EventReceiver receiver = engine.create("demo", demo.INIT, demo);
         
     	while (true) {
     	    final String event = genEvent();
