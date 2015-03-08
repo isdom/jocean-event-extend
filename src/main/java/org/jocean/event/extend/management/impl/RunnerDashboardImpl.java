@@ -13,10 +13,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.jocean.event.api.FlowStateChangedListener;
 import org.jocean.event.api.internal.EventHandler;
 import org.jocean.event.core.FlowContext;
-import org.jocean.event.core.FlowStateChangeListener;
-import org.jocean.event.core.FlowTracker;
 import org.jocean.event.extend.common.EventDrivenFlowRunner;
 import org.jocean.event.extend.management.RunnerDashboardMXBean;
 import org.jocean.event.extend.management.annotation.IndicateInterface;
@@ -233,21 +232,30 @@ public class RunnerDashboardImpl
     private static final Logger LOG = 
         	LoggerFactory.getLogger(RunnerDashboardImpl.class);
     
-	private final FlowStateChangeListener myListener = new FlowStateChangeListener() {
-        @Override
-        public void beforeFlowChangeTo(FlowContext ctx,
-                EventHandler nextHandler, String causeEvent, Object[] causeArgs)
-                throws Exception {
-            updateStateAwareStatistics(ctx);
-        }
+    private final FlowContext.ReactorBuilder _reactorBuilder = new FlowContext.ReactorBuilder() {
 
-        @Override
-        public void afterFlowDestroy(FlowContext ctx) throws Exception {
-            updateAllDealStatistics(ctx);
-        }
-		
-	};
-	
+		@Override
+		public Object[] buildReactors(final FlowContext ctx) {
+			return new Object[]{
+					new FlowStateChangedListener<EventHandler>() {
+						@Override
+						public void onStateChanged(
+								EventHandler prev,
+								EventHandler next, 
+								String causeEvent,
+								Object[] causeArgs) throws Exception {
+							if (null!=prev && null!=next) {
+								updateStateAwareStatistics(ctx);
+							}
+							else if (null==next) {
+					            updateAllDealStatistics(ctx);
+							}
+						}
+					}
+			};
+		}
+    };
+    
 	public RunnerDashboardImpl(final EventDrivenFlowRunner runner) {
 		this._runner = runner;
 		
@@ -269,13 +277,11 @@ public class RunnerDashboardImpl
 
 		this._mbeanSupport.registerMBean("module=dashboard", this);
 		
-		this._runner.queryInterfaceInstance(FlowTracker.class)
-		    .registerFlowStateChangeListener(myListener);
+		this._runner.addReactorBuilder(this._reactorBuilder);
 	}
 
 	public void destroy() {
-		this._runner.queryInterfaceInstance(FlowTracker.class)
-		    .unregisterFlowStateChangeListener(myListener);
+		this._runner.removeReactorBuilder(this._reactorBuilder);
 		
 		this.innerService.shutdownNow();
 		

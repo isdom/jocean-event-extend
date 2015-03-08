@@ -5,6 +5,7 @@ package org.jocean.event.extend.runner;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -20,12 +21,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jocean.event.api.EventEngine;
 import org.jocean.event.api.EventReceiver;
 import org.jocean.event.api.FlowLifecycleListener;
+import org.jocean.event.api.FlowStateChangedListener;
 import org.jocean.event.api.internal.EventHandler;
 import org.jocean.event.api.internal.Eventable;
 import org.jocean.event.core.FlowContext;
+import org.jocean.event.core.FlowContext.ReactorBuilder;
 import org.jocean.event.core.FlowContextImpl;
-import org.jocean.event.core.FlowStateChangeListener;
-import org.jocean.event.core.FlowTracker;
 import org.jocean.event.extend.common.EventDrivenFlowRunner;
 import org.jocean.event.extend.common.FlowCountListener;
 import org.jocean.event.extend.common.FlowCounter;
@@ -155,14 +156,36 @@ public class FlowRunner implements EventDrivenFlowRunner {
 		};
 	}
 	
+	@Override
+    public void addReactorBuilder(
+            final FlowContext.ReactorBuilder builder) {
+        if ( null == builder ) {
+            LOG.warn("addReactorBuilder: builder is null, just ignore");
+        }
+        else {
+            if ( !_reactorBuilderSupport.addComponent(builder) ) {
+                LOG.warn("addReactorBuilder: builder {} has already added", 
+                		builder);
+            }
+        }
+    }
+
+	@Override
+    public void removeReactorBuilder(
+    		final FlowContext.ReactorBuilder builder) {
+        if ( null == builder ) {
+            LOG.warn("removeReactorBuilder: builder is null, just ignore");
+        }
+        else {
+            _reactorBuilderSupport.removeComponent(builder);
+        }
+    }
+    
 	//	implements Extensible
 	@SuppressWarnings("unchecked")
 	@Override
     public <INTF> INTF queryInterfaceInstance(final Class<INTF> type) {
-		if ( type.equals(FlowTracker.class) ) {
-			return	(INTF)this._flowTracker;
-		}
-		else if ( type.equals(FlowCounter.class)) {
+		if ( type.equals(FlowCounter.class)) {
 			return	(INTF)this._flowCounter;
 		}
 		else {
@@ -280,8 +303,10 @@ public class FlowRunner implements EventDrivenFlowRunner {
             final EventHandler initHandler 
             ) {
         final FlowContextImpl newCtx = 
-            new FlowContextImpl(name, reactors, genExectionLoop(), this._ctxStatusReactor, this._flowStateChangeListener)
-                .setCurrentHandler(initHandler, null, null);
+            new FlowContextImpl(name, genExectionLoop(), this._ctxStatusReactor);
+        
+		newCtx.setReactors(addReactors(reactors, newCtx));
+        newCtx.setCurrentHandler(initHandler, null, null);
         
         if (this._flowContexts.add(newCtx) ) {
             // add new context
@@ -293,6 +318,33 @@ public class FlowRunner implements EventDrivenFlowRunner {
         return  newCtx;
     }
     
+	private Object[] addReactors(
+			final Object[] reactors,
+			final FlowContextImpl newCtx) {
+		final List<Object> newReactors = new ArrayList<>();
+		newReactors.addAll(Arrays.asList(reactors));
+		newReactors.add(new FlowStateChangedListener<EventHandler>() {
+			@Override
+			public void onStateChanged(
+					final EventHandler prev, 
+					final EventHandler next,
+					final String causeEvent, 
+					final Object[] causeArgs) throws Exception {
+				if (null==next) {
+					onFlowCtxDestroyed(newCtx);
+				}
+			}
+		});
+		if (!this._reactorBuilderSupport.isEmpty()) {
+			this._reactorBuilderSupport.foreachComponent(new Visitor<ReactorBuilder> () {
+				@Override
+				public void visit(final ReactorBuilder builder) throws Exception {
+					newReactors.addAll(Arrays.asList(builder.buildReactors(newCtx)));
+				}});
+		}
+		return newReactors.toArray();
+	}
+	
 	private ExectionLoop genExectionLoop() {
         final ExecutorService executorService = this.getWorkService();
         if ( null == executorService ) {
@@ -342,7 +394,7 @@ public class FlowRunner implements EventDrivenFlowRunner {
 			this._mbeanSupport.destroy();
 			
 			this._flowCountListenerSupport.clear();
-			this._flowStateChangeListenerSupport.clear();
+			this._reactorBuilderSupport.clear();
 			
 			if ( LOG.isInfoEnabled() ) {
 				LOG.info("runner {}/{} destroyed.", this._name, this._id);
@@ -437,13 +489,6 @@ public class FlowRunner implements EventDrivenFlowRunner {
         }
         
         incDealCompletedCount();
-        
-        _flowStateChangeListenerSupport.foreachComponent(new Visitor<FlowStateChangeListener>() {
-
-            @Override
-            public void visit(final FlowStateChangeListener listener) throws Exception {
-                listener.afterFlowDestroy(ctx);
-            }});
     }
     
 	private void incDealBypassCount() {
@@ -510,32 +555,6 @@ public class FlowRunner implements EventDrivenFlowRunner {
                 }
     	    };
         
-    private final FlowStateChangeListener _flowStateChangeListener = new FlowStateChangeListener() {
-
-        @Override
-        public void beforeFlowChangeTo(
-                final FlowContext ctx,
-                final EventHandler nextHandler, 
-                final String causeEvent, 
-                final Object[] causeArgs)
-                throws Exception {
-            //  if causeEvent is null, means it's initHandler
-            if ( null != causeEvent ) {
-                _flowStateChangeListenerSupport.foreachComponent(
-                        new Visitor<FlowStateChangeListener>() {
-                    @Override
-                    public void visit(final FlowStateChangeListener listener)
-                            throws Exception {
-                        listener.beforeFlowChangeTo(ctx, nextHandler, causeEvent, causeArgs);
-                    }});
-            }
-        }
-
-        @Override
-        public void afterFlowDestroy(final FlowContext ctx) throws Exception {
-            onFlowCtxDestroyed((FlowContextImpl)ctx);
-        }};
-    	        
     private final Set<FlowContextImpl> _flowContexts = 
             new ConcurrentSkipListSet<FlowContextImpl>();
 	
@@ -563,8 +582,8 @@ public class FlowRunner implements EventDrivenFlowRunner {
 	//	JMX support
     private	final MBeanRegisterSupport 	_mbeanSupport;
 	
-    private final COWCompositeSupport<FlowStateChangeListener> _flowStateChangeListenerSupport
-        = new COWCompositeSupport<FlowStateChangeListener>();
+    private final COWCompositeSupport<FlowContext.ReactorBuilder> _reactorBuilderSupport
+        = new COWCompositeSupport<FlowContext.ReactorBuilder>();
     
 	private final COWCompositeSupport<FlowCountListener> _flowCountListenerSupport
 		= new COWCompositeSupport<FlowCountListener>();
@@ -609,31 +628,4 @@ public class FlowRunner implements EventDrivenFlowRunner {
 	}
 	
 	private final FlowCounter _flowCounter = new InnerFlowCounter();
-
-	private final FlowTracker _flowTracker = new FlowTracker() {
-        @Override
-        public void registerFlowStateChangeListener(
-                final FlowStateChangeListener listener) {
-            if ( null == listener ) {
-                LOG.warn("registerFlowStateChangeListener: listener is null, just ignore");
-            }
-            else {
-                if ( !_flowStateChangeListenerSupport.addComponent(listener) ) {
-                    LOG.warn("registerFlowStateChangeListener: listener {} has already registered", 
-                            listener);
-                }
-            }
-        }
-
-        @Override
-        public void unregisterFlowStateChangeListener(
-                final FlowStateChangeListener listener) {
-            if ( null == listener ) {
-                LOG.warn("unregisterFlowStateChangeListener: listener is null, just ignore");
-            }
-            else {
-                _flowStateChangeListenerSupport.removeComponent(listener);
-            }
-        }
-	};
 }
