@@ -318,12 +318,32 @@ public class FlowRunner implements EventDrivenFlowRunner {
         return  newCtx;
     }
     
-	private Object[] addReactors(
-			final Object[] reactors,
+	private Object[] addReactors(final Object[] reactors,
 			final FlowContextImpl newCtx) {
-		final List<Object> newReactors = new ArrayList<>();
-		newReactors.addAll(Arrays.asList(reactors));
-		newReactors.add(new FlowStateChangedListener<EventHandler>() {
+		if (this._reactorBuilderSupport.isEmpty()) {
+			final Object[] newReactors = Arrays.copyOf(reactors, reactors.length + 1);
+			newReactors[newReactors.length-1] = hookOnFlowCtxDestoryed(newCtx);
+			return newReactors;
+		}
+		else {
+			final List<Object> newReactors = new ArrayList<>();
+			newReactors.addAll(Arrays.asList(reactors));
+			newReactors.add(hookOnFlowCtxDestoryed(newCtx));
+			this._reactorBuilderSupport.foreachComponent(new Visitor<ReactorBuilder> () {
+				@Override
+				public void visit(final ReactorBuilder builder) throws Exception {
+					final Object[] ret = builder.buildReactors(newCtx);
+					if (null!=ret && ret.length>0) {
+						newReactors.addAll(Arrays.asList(ret));
+					}
+				}});
+			return newReactors.toArray();
+		}
+	}
+	
+	private FlowStateChangedListener<EventHandler> hookOnFlowCtxDestoryed(
+			final FlowContextImpl ctx) {
+		return new FlowStateChangedListener<EventHandler>() {
 			@Override
 			public void onStateChanged(
 					final EventHandler prev, 
@@ -331,18 +351,10 @@ public class FlowRunner implements EventDrivenFlowRunner {
 					final String causeEvent, 
 					final Object[] causeArgs) throws Exception {
 				if (null==next) {
-					onFlowCtxDestroyed(newCtx);
+					onFlowCtxDestroyed(ctx);
 				}
 			}
-		});
-		if (!this._reactorBuilderSupport.isEmpty()) {
-			this._reactorBuilderSupport.foreachComponent(new Visitor<ReactorBuilder> () {
-				@Override
-				public void visit(final ReactorBuilder builder) throws Exception {
-					newReactors.addAll(Arrays.asList(builder.buildReactors(newCtx)));
-				}});
-		}
-		return newReactors.toArray();
+		};
 	}
 	
 	private ExectionLoop genExectionLoop() {
