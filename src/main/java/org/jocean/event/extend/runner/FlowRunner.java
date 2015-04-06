@@ -121,7 +121,7 @@ public class FlowRunner implements EventDrivenFlowRunner {
 		return	new EventReceiver() {
 
 			@Override
-			public boolean acceptEvent(final String event, final Object... args) throws Exception {
+			public boolean acceptEvent(final String event, final Object... args) {
 		        try {
 		            return ctx.processEvent(event, args);
 		        }
@@ -129,13 +129,13 @@ public class FlowRunner implements EventDrivenFlowRunner {
 		            LOG.error("exception when flow({})'s processEvent, detail:{}, try end flow", 
 		                    this, ExceptionUtils.exception2detail(e));
 		            ctx.destroy(event, args);
-		            throw e;
+//		            throw e;
+                    return false;
 		        }
 			}
 
             @Override
-            public boolean acceptEvent(final Eventable eventable, final Object... args)
-                    throws Exception {
+            public boolean acceptEvent(final Eventable eventable, final Object... args) {
                 try {
                     return ctx.processEvent(eventable, args);
                 }
@@ -143,7 +143,8 @@ public class FlowRunner implements EventDrivenFlowRunner {
                     LOG.error("exception when flow({})'s processEvent, detail:{}, try end flow", 
                             this, ExceptionUtils.exception2detail(e));
 		            ctx.destroy(eventable.event(), args);
-                    throw e;
+//                    throw e;
+                    return false;
                 }
 			}
             
