@@ -99,7 +99,7 @@ public class FlowRunner implements EventDrivenFlowRunner {
         final EventReceiver newReceiver = genEventReceiverWithCtx(name, ctx);
         
         final FlowLifecycleListener lifecycleListener = 
-        		InterfaceUtils.compositeByType(reactors, FlowLifecycleListener.class);
+        		InterfaceUtils.compositeIncludeType(reactors, FlowLifecycleListener.class);
 		if (null!=lifecycleListener) {
 			try {
 				lifecycleListener.afterEventReceiverCreated(newReceiver);
