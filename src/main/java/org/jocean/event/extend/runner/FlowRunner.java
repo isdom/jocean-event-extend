@@ -50,11 +50,13 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * @author hp
+ * @author isdom
  *
  */
 public class FlowRunner implements EventDrivenFlowRunner {
 	
+    private static final Object[] EMPTY_OBJECTS = new Object[0];
+
     private static final Logger LOG = 
     	LoggerFactory.getLogger(FlowRunner.class);
 
@@ -84,7 +86,7 @@ public class FlowRunner implements EventDrivenFlowRunner {
 					final EventHandler init,
 					final Object... reactors
 					) {
-				return createEventReceiverOf(name, init, reactors);
+				return createEventReceiverOf(name, init, null != reactors ? reactors : EMPTY_OBJECTS);
 			}};
 	}
 	
