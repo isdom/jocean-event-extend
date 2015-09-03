@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+        
+    <bean id="eventEngine" class="org.jocean.event.extend.Runners"
+        factory-method="build">
+        <constructor-arg>
+            <bean class="org.jocean.event.extend.Runners.Config">
+                <constructor-arg value="org.jocean:type=eventengine"/>
+                <constructor-arg value="${eventengine.name:default}"/>
+                <constructor-arg>
+                    <bean class="org.jocean.event.extend.Services" 
+                        factory-method="lookupOrCreateTimerService">
+                        <constructor-arg value="${eventengine.name:default}"/>
+                    </bean>
+                </constructor-arg>
+                <constructor-arg>
+                    <bean class="org.jocean.event.extend.Services" 
+                        factory-method="lookupOrCreateFlowBasedExecutorSource">
+                        <constructor-arg value="${eventengine.name:default}"/>
+                    </bean>
+                </constructor-arg>
+            </bean>
+        </constructor-arg>
+    </bean>
+    
+</beans>
