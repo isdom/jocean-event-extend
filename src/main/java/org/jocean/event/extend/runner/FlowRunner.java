@@ -42,10 +42,11 @@ import org.jocean.idiom.ExectionLoop;
 import org.jocean.idiom.InterfaceUtils;
 import org.jocean.idiom.ObservationDestroyable;
 import org.jocean.idiom.ObservationDestroyableSupport;
-import org.jocean.idiom.Visitor;
 import org.jocean.j2se.jmx.MBeanRegisterSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import rx.functions.Action1;
 
 
 
@@ -332,9 +333,9 @@ public class FlowRunner implements EventDrivenFlowRunner {
 			final List<Object> newReactors = new ArrayList<>();
 			newReactors.addAll(Arrays.asList(reactors));
 			newReactors.add(hookOnFlowCtxDestoryed(newCtx));
-			this._reactorBuilderSupport.foreachComponent(new Visitor<ReactorBuilder> () {
+			this._reactorBuilderSupport.foreachComponent(new Action1<ReactorBuilder> () {
 				@Override
-				public void visit(final ReactorBuilder builder) throws Exception {
+				public void call(final ReactorBuilder builder) {
 					final Object[] ret = builder.buildReactors(newCtx);
 					if (null!=ret && ret.length>0) {
 						newReactors.addAll(Arrays.asList(ret));
@@ -477,10 +478,10 @@ public class FlowRunner implements EventDrivenFlowRunner {
     	updateLargestCount(_largestActiveJobCount, nowCount);
     	
     	//	fire listener
-		_flowCountListenerSupport.foreachComponent(new Visitor<FlowCountListener>() {
+		_flowCountListenerSupport.foreachComponent(new Action1<FlowCountListener>() {
 
 			@Override
-			public void visit(final FlowCountListener listener) throws Exception {
+			public void call(final FlowCountListener listener) {
 				listener.onActiveFlowCountIncrement(_flowCounter, nowCount);
 			}});
     }
@@ -489,10 +490,10 @@ public class FlowRunner implements EventDrivenFlowRunner {
 		final int nowCount = _activeFlowCount.decrementAndGet();
 		
     	//	fire listener
-		_flowCountListenerSupport.foreachComponent(new Visitor<FlowCountListener>() {
+		_flowCountListenerSupport.foreachComponent(new Action1<FlowCountListener>() {
 
 			@Override
-			public void visit(final FlowCountListener listener) throws Exception {
+			public void call(final FlowCountListener listener) {
 				listener.onActiveFlowCountDecrement(_flowCounter, nowCount);
 			}});
     }
