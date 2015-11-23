@@ -15,8 +15,8 @@ dependencies {
     compile 'com.google.guava:guava:18.0'
             
     /* jocean */
-    compile ('org.jocean:jocean-j2se:0.0.3') { transitive = false }
-    compile 'org.jocean:jocean-event-core:0.1.5'
+    compile ('org.jocean:jocean-j2se:0.0.4-SNAPSHOT') { transitive = false }
+    compile 'org.jocean:jocean-event-core:0.1.6-SNAPSHOT'
     
     /* test */
     testCompile 'ch.qos.logback:logback-classic:1.1.2'
