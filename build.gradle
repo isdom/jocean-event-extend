@@ -14,7 +14,7 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.21'
     
     compile 'com.google.code.findbugs:jsr305:2.0.3'
-    compile 'com.google.guava:guava:19.0'
+    compile 'com.google.guava:guava:20.0'
             
     /* jocean */
     compile ('org.jocean:jocean-j2se:0.0.4-SNAPSHOT') { transitive = false }
